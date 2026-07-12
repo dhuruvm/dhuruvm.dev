@@ -1,0 +1,27 @@
+kind = "web"
+previewPath = "/"
+title = "Dhuruv M — Portfolio"
+version = "1.0.0"
+id = "artifacts/dhuruv-portfolio"
+router = "path"
+
+[[services]]
+name = "web"
+paths = [ "/" ]
+localPort = 22190
+
+[services.development]
+run = "pnpm --filter @workspace/dhuruv-portfolio run dev"
+
+[services.production]
+build = [ "pnpm", "--filter", "@workspace/dhuruv-portfolio", "run", "build" ]
+serve = "static"
+publicDir = "artifacts/dhuruv-portfolio/dist/public"
+
+[[services.production.rewrites]]
+from = "/*"
+to = "/index.html"
+
+[services.env]
+PORT = "22190"
+BASE_PATH = "/"

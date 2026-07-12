@@ -1,0 +1,27 @@
+kind = "web"
+previewPath = "/game/"
+title = "GitHub Profile Platformer"
+version = "1.0.0"
+id = "artifacts/github-platformer"
+router = "path"
+
+[[services]]
+name = "web"
+paths = [ "/game/" ]
+localPort = 18140
+
+[services.development]
+run = "pnpm --filter @workspace/github-platformer run dev"
+
+[services.production]
+build = [ "pnpm", "--filter", "@workspace/github-platformer", "run", "build" ]
+serve = "static"
+publicDir = "artifacts/github-platformer/dist/public"
+
+[[services.production.rewrites]]
+from = "/*"
+to = "/index.html"
+
+[services.env]
+PORT = "18140"
+BASE_PATH = "/game/"

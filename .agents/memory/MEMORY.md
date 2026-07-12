@@ -1,0 +1,1 @@
+- [Cloned react-vite artifact `@assets` alias](cloned-artifact-assets-alias.md) — check `vite.config.ts`'s actual alias target before assuming assets live in root `attached_assets/`.
