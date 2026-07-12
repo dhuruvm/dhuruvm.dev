@@ -1,5 +1,12 @@
 import Phaser from 'phaser';
 import type { PlatformDef, VirtualInput } from './types';
+import playerIdleUrl from '../assets/player-idle.png';
+import playerWalkUrl from '../assets/player-walk.png';
+
+const WALK_FRAME_WIDTH = 80;
+const WALK_FRAME_HEIGHT = 160;
+const PLAYER_DISPLAY_HEIGHT = 52;
+const PLAYER_SCALE = PLAYER_DISPLAY_HEIGHT / WALK_FRAME_HEIGHT;
 
 const MOVE_SPEED = 210;
 const RUN_SPEED = 360;
@@ -72,6 +79,14 @@ export class MainScene extends Phaser.Scene {
     super('main');
   }
 
+  preload() {
+    this.load.image('player-idle', playerIdleUrl);
+    this.load.spritesheet('player-walk', playerWalkUrl, {
+      frameWidth: WALK_FRAME_WIDTH,
+      frameHeight: WALK_FRAME_HEIGHT,
+    });
+  }
+
   init(data: MainSceneInit) {
     this.worldWidth = data.world.width;
     this.worldHeight = data.world.height;
@@ -89,6 +104,15 @@ export class MainScene extends Phaser.Scene {
 
     this.platformsGroup = this.physics.add.staticGroup();
     this.applyPlatforms(this.getInitPlatforms());
+
+    if (!this.anims.exists('walk')) {
+      this.anims.create({
+        key: 'walk',
+        frames: this.anims.generateFrameNumbers('player-walk', { start: 0, end: 7 }),
+        frameRate: 12,
+        repeat: -1,
+      });
+    }
 
     const spawn = this.computeSpawn();
     this.safeSpawn = { ...spawn };
@@ -196,8 +220,9 @@ export class MainScene extends Phaser.Scene {
     this.player.setOffset(3, 2);
 
     // Visual sprite (squash/stretch tweens applied here, not on physics body)
-    this.playerVisual = this.add.sprite(spawn.x, spawn.y, key);
+    this.playerVisual = this.add.sprite(spawn.x, spawn.y, 'player-idle');
     this.playerVisual.setDepth(10);
+    this.playerVisual.setScale(PLAYER_SCALE);
   }
 
   update(time: number, delta: number) {
@@ -283,6 +308,7 @@ export class MainScene extends Phaser.Scene {
     this.shadow.setVisible(!isInvincible || Math.floor(time / 110) % 2 === 0);
 
     this.updateVisual(onGround, dt, body.velocity.y);
+    this.updateAnimation(onGround, body.velocity.x);
     this.recoverFromFalls(time);
     this.updateInteraction(interactTapped);
     this.followScroll();
@@ -354,14 +380,27 @@ export class MainScene extends Phaser.Scene {
   }
 
   private playSquash(scaleX: number, scaleY: number) {
-    this.playerVisual.setScale(scaleX, scaleY);
+    this.playerVisual.setScale(scaleX * PLAYER_SCALE, scaleY * PLAYER_SCALE);
     this.tweens.add({
       targets: this.playerVisual,
-      scaleX: 1,
-      scaleY: 1,
+      scaleX: PLAYER_SCALE,
+      scaleY: PLAYER_SCALE,
       duration: 145,
       ease: 'Sine.easeOut',
     });
+  }
+
+  /** Switch between the walk-cycle animation and the static idle pose. */
+  private updateAnimation(onGround: boolean, vx: number) {
+    const isWalking = onGround && Math.abs(vx) > 10;
+    if (isWalking) {
+      if (this.playerVisual.anims.currentAnim?.key !== 'walk' || !this.playerVisual.anims.isPlaying) {
+        this.playerVisual.play('walk', true);
+      }
+    } else if (this.playerVisual.anims.isPlaying || this.playerVisual.texture.key !== 'player-idle') {
+      this.playerVisual.anims.stop();
+      this.playerVisual.setTexture('player-idle');
+    }
   }
 
   /** Return the platform id the player is currently standing on, or null. */
