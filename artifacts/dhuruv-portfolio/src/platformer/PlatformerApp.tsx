@@ -29,7 +29,7 @@ type GameState = 'splash' | 'playing' | 'gameover' | 'win';
 
 type ScorePopup = { id: number; amount: number; big: boolean };
 
-function App() {
+function PlatformerApp() {
   const { profile, repos, contributions, loading, error } = useGitHubData(USERNAME);
 
   // ─── Game State ────────────────────────────────────────────────────────────
@@ -365,4 +365,4 @@ function App() {
   );
 }
 
-export default App;
+export default PlatformerApp;
